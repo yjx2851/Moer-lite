@@ -104,10 +104,7 @@ void TriangleMesh::fillIntersection(float distance, int primID, float u,
   //* todo 填充光线与三角网格求交得到的交点信息
   intersection->distance = distance;
   intersection->shape = this;
-  //* 1. 在三角形内部用插值计算交点坐标
-  //* 2. 在三角形内部用插值计算法线
-  //* 3. 在三角形内部用插值计算纹理坐标
-  //* 4. 在三角形内部用插值计算交点的切线和副切线
+
 
   const auto &face = meshData->faceBuffer[primID];
   float w = 1.0f - u - v;
