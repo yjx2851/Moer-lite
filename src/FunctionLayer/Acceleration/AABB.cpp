@@ -39,9 +39,33 @@ bool AABB::Overlap(const AABB &other) const {
   return true;
 }
 
+
+
 bool AABB::RayIntersect(const Ray &ray, float *tMin, float *tMax) const {
   //* todo 实现AABB与光线求交
-  return false;
+  float t0 = ray.tNear;
+  float t1 = ray.tFar;
+
+  // 遍历 x, y, z 三个轴
+  for (int i = 0; i < 3; ++i) {
+      float invD = 1.0f / ray.direction[i];
+      float tNear = (pMin[i] - ray.origin[i]) * invD;
+      float tFar  = (pMax[i] - ray.origin[i]) * invD;
+
+      // 如果方向是负的，交换 near 和 far
+      if (invD < 0.0f) std::swap(tNear, tFar);
+
+      // 更新整体的交区间
+      t0 = std::max(t0, tNear);
+      t1 = std::min(t1, tFar);
+
+      // 区间无交，返回false
+      if (t0 > t1) return false;
+  }
+
+  if (tMin) *tMin = t0;
+  if (tMax) *tMax = t1;
+  return true;
 }
 
 Point3f AABB::Center() const {
