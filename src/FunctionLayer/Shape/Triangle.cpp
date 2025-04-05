@@ -1,4 +1,5 @@
 #include "Triangle.h"
+#include "FastMath/FastMath.h"
 #include <FunctionLayer/Acceleration/Linear.h>
 //--- Triangle ---
 Triangle::Triangle(int _primID, int _vtx0Idx, int _vtx1Idx, int _vtx2Idx,
@@ -17,42 +18,48 @@ Triangle::Triangle(int _primID, int _vtx0Idx, int _vtx1Idx, int _vtx2Idx,
 bool Triangle::rayIntersectShape(Ray &ray, int *primID, float *u,
                                  float *v) const {
   //* todo 实现三角形与光线求交
-  Point3f origin = ray.origin;
-  Vector3f direction = ray.direction;
+  Point3f O = ray.origin;
+  Vector3f D = ray.direction;
 
   // 三角形三个顶点
-  Point3f v0 = mesh->transform.toWorld(mesh->meshData->vertexBuffer[vtx0Idx]);
-  Point3f v1 = mesh->transform.toWorld(mesh->meshData->vertexBuffer[vtx1Idx]);
-  Point3f v2 = mesh->transform.toWorld(mesh->meshData->vertexBuffer[vtx2Idx]);
-
-  Vector3f edge1 = v1 - v0;
-  Vector3f edge2 = v2 - v0;
-
-  Vector3f pvec = cross(direction, edge2);
-  float det = dot(edge1, pvec);
-
-  // 允许双面交点
-  if (fabs(det) < 1e-6f) return false;
-
-  float invDet = 1.0f / det;
-  Vector3f tvec = origin - v0;
-
-  float uu = dot(tvec, pvec) * invDet;
-  if (uu < 0.0f || uu > 1.0f) return false;
-
-  Vector3f qvec = cross(tvec, edge1);
-  float vv = dot(direction, qvec) * invDet;
-  if (vv < 0.0f || (uu + vv) > 1.0f) return false;
-
-  float t = dot(edge2, qvec) * invDet;
-  if (t < ray.tNear || t > ray.tFar) return false;
-
-  // 更新光线最近命中点
-  ray.tFar = t;
-  if (primID) *primID = this->primID;
-  if (u) *u = uu;
-  if (v) *v = vv;
-  return true;
+  Point3f a = mesh->transform.toWorld(mesh->meshData->vertexBuffer[vtx0Idx]);
+  Point3f b = mesh->transform.toWorld(mesh->meshData->vertexBuffer[vtx1Idx]);
+  Point3f c = mesh->transform.toWorld(mesh->meshData->vertexBuffer[vtx2Idx]);
+  Vector3f ab = a - b;
+  Vector3f ac = a - c;
+  Vector3f ao= a-O;
+  vecmat::mat<3, 3, float> matA(
+              vecmat::vec<3, float>(ab[0], ac[0], D[0]),
+              vecmat::vec<3, float>(ab[1], ac[1], D[1]),
+              vecmat::vec<3, float>(ab[2], ac[2], D[2])
+          );
+  float A = matA.determinant();
+  if (fabs(A) < 1e-8f) return false;
+  float beta=vecmat::mat<3,3,float>(
+    vecmat::vec<3,float>(ao[0],ac[0],D[0]),
+    vecmat::vec<3,float>(ao[1],ac[1],D[1]),
+    vecmat::vec<3,float>(ao[2],ac[2],D[2])
+  ).determinant()/A;
+  float gamma=vecmat::mat<3,3,float>(
+    vecmat::vec<3,float>(ab[0],ao[0],D[0]),
+    vecmat::vec<3,float>(ab[1],ao[1],D[1]),
+    vecmat::vec<3,float>(ab[2],ao[2],D[2])
+  ).determinant()/A;
+  if ((beta+gamma)<=1.0f && beta>=0.0f && gamma>=0.0f){
+    float t=vecmat::mat<3,3,float>(
+      vecmat::vec<3,float>(ab[0],ac[0],ao[0]),
+      vecmat::vec<3,float>(ab[1],ac[1],ao[1]),
+      vecmat::vec<3,float>(ab[2],ac[2],ao[2])
+    ).determinant()/A;
+    if (t>ray.tNear && t<ray.tFar){
+      ray.tFar=t;
+      *primID=this->primID;
+      *u=beta;
+      *v=gamma;
+      return true;
+    }
+  }
+  return false;
 }
 
 void Triangle::fillIntersection(float distance, int primID, float u, float v,
@@ -104,7 +111,10 @@ void TriangleMesh::fillIntersection(float distance, int primID, float u,
   //* todo 填充光线与三角网格求交得到的交点信息
   intersection->distance = distance;
   intersection->shape = this;
-
+  //* 1. 在三角形内部用插值计算交点坐标
+  //* 2. 在三角形内部用插值计算法线
+  //* 3. 在三角形内部用插值计算纹理坐标
+  //* 4. 在三角形内部用插值计算交点的切线和副切线
 
   const auto &face = meshData->faceBuffer[primID];
   float w = 1.0f - u - v;
