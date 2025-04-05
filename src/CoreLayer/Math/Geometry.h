@@ -118,12 +118,28 @@ public:
   Point3f(float f = .0f) { xyz = vecmat::vec3f::fill(f); }
   Point3f(float _x, float _y, float _z) : xyz(_x, _y, _z) {}
 
-  //* 与向量相加
+  //* 与Vector3f向量相加
   Point3f operator+(const Vector3f &rhs) const {
     return Point3f(xyz + rhs.xyz);
   }
   Point3f &operator+=(const Vector3f &rhs) {
     xyz += rhs.xyz;
+    return *this;
+  }
+
+  //* 与Point3f向量相加
+  Point3f operator+(const Point3f &rhs) const {
+    return Point3f(xyz + rhs.xyz);
+  }
+  Point3f &operator+=(const Point3f &rhs) {
+    xyz += rhs.xyz;
+    return *this;
+  }
+
+  //* 与向量相乘
+  Point3f operator*(float f) const { return Point3f(xyz * f); }
+  Point3f &operator*=(float f) {
+    xyz *= f;
     return *this;
   }
 
