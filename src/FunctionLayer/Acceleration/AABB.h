@@ -11,6 +11,16 @@ public:
 
   AABB(const Point3f &_pMin, const Point3f &_pMax) : pMin(_pMin), pMax(_pMax) {}
 
+  int MaximumExtent() const {
+    Vector3f diag = pMax - pMin;
+    if (diag[0] > diag[1] && diag[0] > diag[2])
+        return 0; // x轴最大
+    else if (diag[1] > diag[2])
+        return 1; // y轴最大
+    else
+        return 2; // z轴最大
+}
+
   AABB Union(const AABB &other) const;
 
   void Expand(const AABB &other);

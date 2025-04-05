@@ -42,7 +42,7 @@
     "type": "normal"
   },
   "scene": {
-    "acceleration": "linear",
+    "acceleration": "bvh",
     "shapes": [
       {
         "type": "triangle",

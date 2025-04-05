@@ -43,8 +43,8 @@ bool AABB::Overlap(const AABB &other) const {
 
 bool AABB::RayIntersect(const Ray &ray, float *tMin, float *tMax) const {
   //* todo 实现AABB与光线求交
-  float t0 = ray.tNear;
-  float t1 = ray.tFar;
+  float t0 = -std::numeric_limits<float>::infinity();
+  float t1 =  std::numeric_limits<float>::infinity();
 
   // 遍历 x, y, z 三个轴
   for (int i = 0; i < 3; ++i) {

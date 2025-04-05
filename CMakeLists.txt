@@ -5,6 +5,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(Moer-lite LANGUAGES CXX)
 
+# 设置默认构建类型为 Release
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 if(MSVC)
   add_compile_options("/MP")
   add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
